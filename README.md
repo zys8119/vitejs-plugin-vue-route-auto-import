@@ -33,3 +33,20 @@ const app = createApp(App)
 .use(route)
 app.mount('#app')
 ```
+
+
+## ts类型兼容请引入
+
+tsconfig.json
+
+```json
+{
+    "compilerOptions": {
+        // ...
+        "types": [
+            //....
+            "vitejs-plugin-vue-route-auto-import/type"
+        ]
+    }
+}
+```
