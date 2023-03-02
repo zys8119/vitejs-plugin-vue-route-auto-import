@@ -4,7 +4,6 @@ import {resolve} from 'path'
 import * as sfc from '@vue/compiler-sfc'
 import glob from 'fast-glob'
 import _ from 'lodash'
-import {RouteRecordRaw, RouterOptions} from "vue-router";
 export type Config = {
     /**
      * 动态生成的route文件名称，默认输出在根目录，且名称为 route

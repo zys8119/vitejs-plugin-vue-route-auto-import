@@ -1,6 +1,6 @@
 {
     "name": "vitejs-plugin-vue-route-auto-import",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "description": "vue3路由自动引入vitejs插件",
     "keywords": ["vue", "vitejs", "vitejs-plugin", "vue-route", "auto"],
     "repository": {
