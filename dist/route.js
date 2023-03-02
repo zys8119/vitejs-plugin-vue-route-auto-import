@@ -12,16 +12,17 @@ for (const [key, component] of Object.entries(files)) {
   const directory = key.replace("/" + fileName, "");
   const layoutRegs = directory.split("/").map((e, i, arr) => arr.slice(0, i + 1).join("/")).map((e) => new RegExp(`^${e}/layout\\.(vue|jsx|tsx)`, "img"));
   const layout = filesKeys.find((e) => layoutRegs.some((ee) => ee.test(e)));
+  const meta = Object.assign(metaMaps[key] || {}, (pages[pageJson] || {})[fileName] || {});
   if (!ROUTES_FILTER_REG.test(key)) {
     routes.push({
       component,
       name,
-      path: path.toLowerCase(),
+      path: typeof meta?.path === "string" ? meta.path : path.toLowerCase(),
       key,
       fileName,
       layout,
       directory,
-      meta: Object.assign(metaMaps[key] || {}, (pages[pageJson] || {})[fileName] || {})
+      meta
     });
   }
 }
@@ -56,6 +57,7 @@ const pathToTree = (input, reg) => {
             }
           }
           const pageJsonPath = path.replace(new RegExp(`${chain[j]}\\.${suffix}$`, "i"), "page.json");
+          const meta = Object.assign(metaMaps[path] || {}, (pages[pageJsonPath] || {})[`${chain[j]}.${suffix}`] || {});
           const newNode = {
             key,
             name: wantedNode,
@@ -63,9 +65,9 @@ const pathToTree = (input, reg) => {
             directory,
             suffix: directory ? null : suffix,
             filePath: path,
-            path: chain[j].toLowerCase(),
+            path: typeof meta?.path === "string" ? meta.path : chain[j].toLowerCase(),
             component: directory ? layoutComponent : files[path],
-            meta: Object.assign(metaMaps[path] || {}, (pages[pageJsonPath] || {})[`${chain[j]}.${suffix}`] || {})
+            meta
           };
           currentNode[k] = newNode;
           currentNode = newNode.children;
