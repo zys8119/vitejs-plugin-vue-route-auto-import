@@ -1,0 +1,25 @@
+{
+    "name": "vitejs-plugin-vue-route-auto-import",
+    "version": "0.0.1",
+    "description": "",
+    "main": "dist/vite.js",
+    "types": "src/vite.ts",
+    "type": "module",
+    "scripts": {
+        "build": "ts-node-esm build.ts"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@types/lodash": "^4.14.191",
+        "esbuild": "^0.17.10",
+        "ts-node": "^10.9.1",
+        "vite": "^4.1.4",
+        "vue-router": "^4.1.6"
+    },
+    "dependencies": {
+        "@vue/compiler-sfc": "^3.2.47",
+        "fast-glob": "^3.2.12",
+        "lodash": "^4.17.21"
+    }
+}

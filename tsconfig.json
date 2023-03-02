@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "module": "ESNext",
+        "target": "ESNext",
+        "sourceMap": false,
+        "esModuleInterop": true,
+        "moduleResolution": "Node",
+        "types": [
+            "vite/client"
+        ]
+    },
+    "exclude": [
+        "node_modules"
+    ]
+}
