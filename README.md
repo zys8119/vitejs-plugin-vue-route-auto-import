@@ -22,7 +22,7 @@ export default defineConfig({
              */
             // route:string
             /**
-             * 动态生成的路由文件后缀名称，默认 .ts
+             * 动态生成的路由文件后缀名称，默认 ts
              */
             // route_suffix:string
             /**
