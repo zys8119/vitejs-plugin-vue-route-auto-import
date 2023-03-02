@@ -18,7 +18,7 @@ const ROUTES_META = function(config) {
   const cwd = resolve(process.cwd(), "node_modules", "vitejs-plugin-vue-route-auto-import");
   const routeCode = currConfig.route_suffix === "ts" ? readFileSync(resolve(cwd, "src/route.ts"), "utf-8") : readFileSync(resolve(cwd, "dist/route.js"), "utf-8");
   writeFileSync(routePath, routeCode);
-  const ROUTES_CUSTOM_ROUTER = currConfig.routes ? `import ROUTES_CUSTOM_ROUTER from "${currConfig.routes}"` : "const ROUTES_CUSTOM_ROUTER = []";
+  const ROUTES_CUSTOM_ROUTER = currConfig.routes_extend ? `import ROUTES_CUSTOM_ROUTER from "${currConfig.routes_extend}"` : "const ROUTES_CUSTOM_ROUTER = []";
   const ROUTES_CUSTOM_CONFIG = currConfig.routesCustomConfig ? `import ROUTES_CUSTOM_CONFIG from "${currConfig.routesCustomConfig}"` : "const ROUTES_CUSTOM_CONFIG = {}";
   let routeModuleId = null;
   return {
