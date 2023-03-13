@@ -35,7 +35,7 @@ export type Config = {
     routesFilter:RegExp | string
 }
 
-declare function AutoRoute(config:Partial<Config>):Plugin
+declare function AutoRoute(config?:Partial<Config>):Plugin
 
 
 export default AutoRoute
