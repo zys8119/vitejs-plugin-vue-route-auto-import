@@ -1,11 +1,11 @@
 import { createRouter, createWebHashHistory, RouterView } from "vue-router";
-let files = import.meta.glob("./views/**/*.{vue,jsx,tsx}", {});
-const pages = import.meta.glob("./views/**/page.json", { eager: true, import: "default" });
+let files = import.meta.glob("./VIEWSDIR/**/*.{vue,jsx,tsx}", {});
+const pages = import.meta.glob("./VIEWSDIR/**/page.json", { eager: true, import: "default" });
 const filesKeys = Object.keys(files);
 const metaMaps = ROUTES_META;
 let routes = [];
 for (const [key, component] of Object.entries(files)) {
-  const path = key.replace(/^\.\/views|\.(vue|jsx|tsx)$/img, "");
+  const path = key.replace(/^\.\/VIEWREG|\.(vue|jsx|tsx)$/img, "");
   const name = path.split("/").filter((e) => e).join("-");
   const fileName = /(?:\/?([^\/]+\.(vue|jsx|tsx)$))/.exec(key)[1];
   const pageJson = key.replace(fileName, "page.json");
@@ -27,7 +27,7 @@ for (const [key, component] of Object.entries(files)) {
   }
 }
 const pathToTree = (input, reg) => {
-  const currInput = input.map((e) => e.replace(/^\.\/views\//, ""));
+  const currInput = input.map((e) => e.replace(/^\.\/VIEWREG\//, ""));
   const output = [];
   for (let i = 0; i < currInput.length; i++) {
     const key = currInput[i];
@@ -48,7 +48,7 @@ const pathToTree = (input, reg) => {
         }
         if (lastNode == currentNode) {
           const directory = chainJoin !== wantedNode;
-          const path = `./views/${chain.slice(0, j + 1).join("/")}${directory ? "" : `.${suffix}`}`;
+          const path = `./VIEWSDIR/${chain.slice(0, j + 1).join("/")}${directory ? "" : `.${suffix}`}`;
           let layoutComponent = RouterView;
           if (directory) {
             const layoutPath = input.find((e) => new RegExp(`^${path}/layout\\.(vue|jsx|tsx)`, "img").test(e));

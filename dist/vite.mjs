@@ -37,7 +37,7 @@ const ROUTES_META = function(config) {
         }, {});
         return `${ROUTES_CUSTOM_ROUTER}
 ${ROUTES_CUSTOM_CONFIG}
-` + readFileSync(id, "utf-8").replace(/ROUTES_META/img, JSON.stringify(map)).replace(/ROUTES_FILTER_REG/img, new RegExp(currConfig.routesFilter).toString()).replace(/views/img, currConfig.views).replace(/page\.json/img, currConfig.pageJson).replace(/\{vue\,jsx\,tsx\}/img, `{${currConfig.suffix.join(",")}}`).replace(/\(vue\|jsx\|tsx\)/img, `(${currConfig.suffix.join("|")})`);
+` + readFileSync(id, "utf-8").replace(/ROUTES_META/img, JSON.stringify(map)).replace(/ROUTES_FILTER_REG/img, new RegExp(currConfig.routesFilter).toString()).replace(/VIEWREG/img, currConfig.views.replace(/\//img, "\\/")).replace(/VIEWSDIR/img, currConfig.views).replace(/page\.json/img, currConfig.pageJson).replace(/\{vue\,jsx\,tsx\}/img, `{${currConfig.suffix.join(",")}}`).replace(/\(vue\|jsx\|tsx\)/img, `(${currConfig.suffix.join("|")})`);
       }
     },
     handleHotUpdate(cxt) {
