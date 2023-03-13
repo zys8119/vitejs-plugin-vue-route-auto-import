@@ -61,7 +61,8 @@ const pathToTree = (input:string[], reg:RegExp) => {
                         }
                     }
                     const pageJsonPath = path.replace(new RegExp(`${chain[j]}\\.${suffix}$`,'i'), 'page.json')
-                    const meta = Object.assign(metaMaps[path] || {},(pages[pageJsonPath] || {} as any)[`${chain[j]}.${suffix}`] || {})
+                    const directoryMeta:any = pages[pageJsonPath.replace(new RegExp(`(${wantedNode}$)`),'page.json')] || {}
+                    const meta = directory ? directoryMeta[wantedNode] || {} : Object.assign(metaMaps[path] || {},(pages[pageJsonPath] || {} as any)[`${chain[j]}.${suffix}`] || {})
                     const newNode = {
                         key,
                         name: wantedNode,
