@@ -1,5 +1,5 @@
 import { createRouter, createWebHashHistory, RouterView } from "vue-router";
-let files = import.meta.glob("./VIEWSDIR/**/*.{vue,jsx,tsx}", {});
+const files = import.meta.glob("./VIEWSDIR/**/*.{vue,jsx,tsx}", {});
 const pages = import.meta.glob("./VIEWSDIR/**/page.json", { eager: true, import: "default" });
 const filesKeys = Object.keys(files);
 const metaMaps = ROUTES_META;

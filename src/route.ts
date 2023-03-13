@@ -1,5 +1,6 @@
+/*eslint-disable*/
 import {createRouter, createWebHashHistory, RouterView} from "vue-router"
-let files = import.meta.glob("./VIEWSDIR/**/*.{vue,jsx,tsx}", {})
+const files = import.meta.glob("./VIEWSDIR/**/*.{vue,jsx,tsx}", {})
 const pages = import.meta.glob("./VIEWSDIR/**/page.json", {eager:true, import:'default'})
 const filesKeys = Object.keys(files)
 const metaMaps = ROUTES_META
@@ -8,12 +9,12 @@ let routes:any = []
 for(const [key, component] of Object.entries(files)){
     const path = key.replace(/^\.\/VIEWREG|\.(vue|jsx|tsx)$/img,'')
     const name = path.split('/').filter(e=>e).join("-")
-    const fileName = /(?:\/?([^\/]+\.(vue|jsx|tsx)$))/.exec(key)[1]
+    const fileName = (/(?:\/?([^\/]+\.(vue|jsx|tsx)$))/.exec(key) as any)[1]
     const pageJson = key.replace(fileName,'page.json')
     const directory = key.replace('/'+fileName, '')
     const layoutRegs = directory.split('/').map((e, i, arr)=>arr.slice(0, i+1).join('/')).map(e=> new RegExp(`^${e}\/layout\\.(vue|jsx|tsx)`, 'img'))
     const layout = filesKeys.find(e=>layoutRegs.some(ee=>ee.test(e)))
-    const meta = Object.assign(metaMaps[key] || {}, (pages[pageJson] || {})[fileName] || {})
+    const meta = Object.assign(metaMaps[key] || {}, ((pages[pageJson] || {}) as any)[fileName] || {})
     // 过滤Alert
     if(!ROUTES_FILTER_REG.test(key)){
         routes.push({
@@ -28,16 +29,16 @@ for(const [key, component] of Object.entries(files)){
         })
     }
 }
-const pathToTree = (input, reg) => {
+const pathToTree = (input:string[], reg:RegExp) => {
     const currInput = input.map(e=>e.replace(/^\.\/VIEWREG\//,''))
-    const output = [];
+    const output:any[] = [];
     for (let i = 0; i < currInput.length; i++) {
-        const key = currInput[i]
+        const key:any = currInput[i]
         // 过滤Alert
         if(!ROUTES_FILTER_REG.test(key)){
             const chain = key.replace(reg, '').split("/");
             const chainJoin = chain.join("-").toLowerCase();
-            const suffix = key.match(reg)[1]
+            const suffix = (key.match(reg) as any)[1]
             let currentNode:any = output;
             for (let j = 0; j < chain.length; j++) {
                 const wantedNode = chain.slice(0, j+1).join('-').toLowerCase();
@@ -60,7 +61,7 @@ const pathToTree = (input, reg) => {
                         }
                     }
                     const pageJsonPath = path.replace(new RegExp(`${chain[j]}\\.${suffix}$`,'i'), 'page.json')
-                    const meta = Object.assign(metaMaps[path] || {},(pages[pageJsonPath] || {})[`${chain[j]}.${suffix}`] || {})
+                    const meta = Object.assign(metaMaps[path] || {},(pages[pageJsonPath] || {} as any)[`${chain[j]}.${suffix}`] || {})
                     const newNode = {
                         key,
                         name: wantedNode,
@@ -86,7 +87,7 @@ const pathToTree = (input, reg) => {
     }));
 }
 // 嵌套路由
-routes = routes.filter(e=>!e.layout).concat(pathToTree(routes.filter(e=>e.layout).map(e=>e.key),/\.(vue|jsx|tsx)$/))
+routes = routes.filter((e:any)=>!e.layout).concat(pathToTree(routes.filter((e:any)=>e.layout).map((e:any)=>e.key),/\.(vue|jsx|tsx)$/))
 export default createRouter(Object.assign({
     history:createWebHashHistory(),
 }, ROUTES_CUSTOM_CONFIG, {
