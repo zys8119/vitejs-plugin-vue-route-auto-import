@@ -4,6 +4,34 @@ const pages = import.meta.glob("./VIEWSDIR/**/page.json", { eager: true, import:
 const filesKeys = Object.keys(files);
 const metaMaps = ROUTES_META;
 let routes = [];
+const getRoute = (routeConfig) => {
+  let { name, redirect, alias: aliasStr } = routeConfig.meta || {};
+  let alias = null;
+  try {
+    alias = JSON.parse(aliasStr);
+  } catch (e) {
+    if (typeof aliasStr === "string") {
+      alias = [aliasStr];
+    }
+  }
+  const result = {
+    ...routeConfig,
+    props(route) {
+      return {
+        ...route.query,
+        ...route.params
+      };
+    },
+    name: typeof name === "string" ? name : routeConfig.name
+  };
+  if (typeof redirect === "string") {
+    result.redirect = redirect;
+  }
+  if (alias) {
+    result.alias = alias;
+  }
+  return result;
+};
 for (const [key, component] of Object.entries(files)) {
   const path = key.replace(/^\.\/VIEWREG|\.(vue|jsx|tsx)$/img, "");
   const name = path.split("/").filter((e) => e).join("-");
@@ -14,7 +42,7 @@ for (const [key, component] of Object.entries(files)) {
   const layout = filesKeys.find((e) => layoutRegs.some((ee) => ee.test(e)));
   const meta = Object.assign(metaMaps[key] || {}, (pages[pageJson] || {})[fileName] || {});
   if (!ROUTES_FILTER_REG.test(key)) {
-    routes.push({
+    routes.push(getRoute({
       component,
       name,
       path: typeof meta?.path === "string" ? meta.path : path.toLowerCase(),
@@ -23,7 +51,7 @@ for (const [key, component] of Object.entries(files)) {
       layout,
       directory,
       meta
-    });
+    }));
   }
 }
 const pathToTree = (input, reg) => {
@@ -59,7 +87,7 @@ const pathToTree = (input, reg) => {
           const pageJsonPath = path.replace(new RegExp(`${chain[j]}\\.${suffix}$`, "i"), "page.json");
           const directoryMeta = pages[pageJsonPath.replace(new RegExp(`(${wantedNode}$)`), "page.json")] || {};
           const meta = directory ? directoryMeta[wantedNode] || {} : Object.assign(metaMaps[path] || {}, (pages[pageJsonPath] || {})[`${chain[j]}.${suffix}`] || {});
-          const newNode = {
+          const newNode = getRoute({
             key,
             name: wantedNode,
             children: [],
@@ -69,7 +97,7 @@ const pathToTree = (input, reg) => {
             path: typeof meta?.path === "string" ? meta.path : chain[j].toLowerCase(),
             component: directory ? layoutComponent : files[path],
             meta
-          };
+          });
           currentNode[k] = newNode;
           currentNode = newNode.children;
         } else {

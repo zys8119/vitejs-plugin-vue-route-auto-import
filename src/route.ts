@@ -1,10 +1,42 @@
 /*eslint-disable*/
-import {createRouter, createWebHashHistory, RouterView} from "vue-router"
+import {createRouter, createWebHashHistory, RouterView, RouteRecordRaw} from "vue-router"
 const files = import.meta.glob("./VIEWSDIR/**/*.{vue,jsx,tsx}", {})
 const pages = import.meta.glob("./VIEWSDIR/**/page.json", {eager:true, import:'default'})
 const filesKeys = Object.keys(files)
 const metaMaps = ROUTES_META
 let routes:any = []
+const getRoute = (routeConfig: RouteRecordRaw & Partial<{
+    key:any
+    fileName:any
+    layout:any
+    directory:any
+    suffix:any
+    filePath:any
+}>)=> {
+    let {name, redirect, alias:aliasStr}:any = routeConfig.meta || {}
+    let alias = null
+    try {
+        alias = JSON.parse(aliasStr)
+    }catch (e) {
+        // err
+        if(typeof aliasStr === 'string'){
+            alias = [aliasStr]
+        }
+    }
+    const result = {
+        ...routeConfig,
+        props(route){
+            return {
+                ...route.query,
+                ...route.params,
+            }
+        },
+        name:typeof name === 'string' ? name :  routeConfig.name
+    } as  RouteRecordRaw
+    if(typeof redirect === 'string'){result.redirect = redirect}
+    if(alias){result.alias = alias}
+    return result
+}
 // 平铺路由
 for(const [key, component] of Object.entries(files)){
     const path = key.replace(/^\.\/VIEWREG|\.(vue|jsx|tsx)$/img,'')
@@ -17,7 +49,7 @@ for(const [key, component] of Object.entries(files)){
     const meta = Object.assign(metaMaps[key] || {}, ((pages[pageJson] || {}) as any)[fileName] || {})
     // 过滤Alert
     if(!ROUTES_FILTER_REG.test(key)){
-        routes.push({
+        routes.push(getRoute({
             component,
             name,
             path:typeof meta?.path === 'string' ? meta.path : path.toLowerCase(),
@@ -25,8 +57,8 @@ for(const [key, component] of Object.entries(files)){
             fileName,
             layout,
             directory,
-            meta
-        })
+            meta,
+        }))
     }
 }
 const pathToTree = (input:string[], reg:RegExp) => {
@@ -63,7 +95,7 @@ const pathToTree = (input:string[], reg:RegExp) => {
                     const pageJsonPath = path.replace(new RegExp(`${chain[j]}\\.${suffix}$`,'i'), 'page.json')
                     const directoryMeta:any = pages[pageJsonPath.replace(new RegExp(`(${wantedNode}$)`),'page.json')] || {}
                     const meta = directory ? directoryMeta[wantedNode] || {} : Object.assign(metaMaps[path] || {},(pages[pageJsonPath] || {} as any)[`${chain[j]}.${suffix}`] || {})
-                    const newNode = {
+                    const newNode = getRoute({
                         key,
                         name: wantedNode,
                         children: [],
@@ -73,7 +105,7 @@ const pathToTree = (input:string[], reg:RegExp) => {
                         path:typeof meta?.path === 'string' ? meta.path : chain[j].toLowerCase(),
                         component:directory ? layoutComponent : files[path],
                         meta,
-                    };
+                    });
                     currentNode[k] = newNode
                     currentNode = newNode.children;
                 } else {
