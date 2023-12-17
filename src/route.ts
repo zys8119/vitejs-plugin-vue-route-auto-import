@@ -13,7 +13,7 @@ const getRoute = (routeConfig: RouteRecordRaw & Partial<{
     suffix:any
     filePath:any
 }>)=> {
-    let {name, redirect, alias:aliasStr}:any = routeConfig.meta || {}
+    let {name, redirect, alias:aliasStr, routeProp}:any = routeConfig.meta || {}
     let alias = null
     try {
         alias = JSON.parse(aliasStr)
@@ -25,13 +25,14 @@ const getRoute = (routeConfig: RouteRecordRaw & Partial<{
     }
     const result = {
         ...routeConfig,
-        props(route){
+        props(route:any){
             return {
                 ...route.query,
                 ...route.params,
             }
         },
-        name:typeof name === 'string' ? name :  routeConfig.name
+        name:typeof name === 'string' ? name :  routeConfig.name,
+        ...(Object.prototype.toString.call(routeProp) === '[object Object]' ? routeProp : {})
     } as  RouteRecordRaw
     if(typeof redirect === 'string'){result.redirect = redirect}
     if(alias){result.alias = alias}
@@ -92,9 +93,10 @@ const pathToTree = (input:string[], reg:RegExp) => {
                             layoutComponent = files[layoutPath]
                         }
                     }
-                    const pageJsonPath = path.replace(new RegExp(`${chain[j]}\\.${suffix}$`,'i'), 'page.json')
-                    const directoryMeta:any = pages[pageJsonPath.replace(new RegExp(`(${wantedNode}$)`),'page.json')] || {}
-                    const meta = directory ? directoryMeta[wantedNode] || {} : Object.assign(metaMaps[path] || {},(pages[pageJsonPath] || {} as any)[`${chain[j]}.${suffix}`] || {})
+                    const pageJsonPath = directory ? `${path}/page.json` : path.replace(new RegExp(`${chain[j]}\\.${suffix}$`,'i'), 'page.json')
+                    const directoryMeta:any = (directory ? pages[pageJsonPath] : pages[pageJsonPath.replace(new RegExp(`(${wantedNode}$)`),'page.json')]) || {}
+                    const meta = directory ? directoryMeta[chain[j]] || {} : Object.assign(metaMaps[path] || {},(pages[pageJsonPath] || {} as any)[`${chain[j]}.${suffix}`] || {})
+                    const route_path = typeof meta?.path === 'string' ? meta.path : chain[j].toLowerCase()
                     const newNode = getRoute({
                         key,
                         name: wantedNode,
@@ -102,7 +104,7 @@ const pathToTree = (input:string[], reg:RegExp) => {
                         directory,
                         suffix:directory ? null : suffix,
                         filePath:path,
-                        path:typeof meta?.path === 'string' ? meta.path : chain[j].toLowerCase(),
+                        path:route_path,
                         component:directory ? layoutComponent : files[path],
                         meta,
                     });

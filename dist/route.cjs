@@ -5,7 +5,7 @@ const filesKeys = Object.keys(files);
 const metaMaps = ROUTES_META;
 let routes = [];
 const getRoute = (routeConfig) => {
-  let { name, redirect, alias: aliasStr } = routeConfig.meta || {};
+  let { name, redirect, alias: aliasStr, routeProp } = routeConfig.meta || {};
   let alias = null;
   try {
     alias = JSON.parse(aliasStr);
@@ -22,7 +22,8 @@ const getRoute = (routeConfig) => {
         ...route.params
       };
     },
-    name: typeof name === "string" ? name : routeConfig.name
+    name: typeof name === "string" ? name : routeConfig.name,
+    ...Object.prototype.toString.call(routeProp) === "[object Object]" ? routeProp : {}
   };
   if (typeof redirect === "string") {
     result.redirect = redirect;
@@ -84,9 +85,10 @@ const pathToTree = (input, reg) => {
               layoutComponent = files[layoutPath];
             }
           }
-          const pageJsonPath = path.replace(new RegExp(`${chain[j]}\\.${suffix}$`, "i"), "page.json");
-          const directoryMeta = pages[pageJsonPath.replace(new RegExp(`(${wantedNode}$)`), "page.json")] || {};
-          const meta = directory ? directoryMeta[wantedNode] || {} : Object.assign(metaMaps[path] || {}, (pages[pageJsonPath] || {})[`${chain[j]}.${suffix}`] || {});
+          const pageJsonPath = directory ? `${path}/page.json` : path.replace(new RegExp(`${chain[j]}\\.${suffix}$`, "i"), "page.json");
+          const directoryMeta = (directory ? pages[pageJsonPath] : pages[pageJsonPath.replace(new RegExp(`(${wantedNode}$)`), "page.json")]) || {};
+          const meta = directory ? directoryMeta[chain[j]] || {} : Object.assign(metaMaps[path] || {}, (pages[pageJsonPath] || {})[`${chain[j]}.${suffix}`] || {});
+          const route_path = typeof meta?.path === "string" ? meta.path : chain[j].toLowerCase();
           const newNode = getRoute({
             key,
             name: wantedNode,
@@ -94,7 +96,7 @@ const pathToTree = (input, reg) => {
             directory,
             suffix: directory ? null : suffix,
             filePath: path,
-            path: typeof meta?.path === "string" ? meta.path : chain[j].toLowerCase(),
+            path: route_path,
             component: directory ? layoutComponent : files[path],
             meta
           });
