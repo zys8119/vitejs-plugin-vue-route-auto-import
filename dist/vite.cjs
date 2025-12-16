@@ -44,9 +44,29 @@ const ROUTES_META = function(config) {
           const descriptor = sfc.parse(
             `${code.match(/<script([^>])*>/)?.[0] || "<script>"}console.log(1)<script/>`
           ).descriptor;
+          const attrs = ((attr) => {
+            return Object.fromEntries(
+              Object.entries(attr).map(([key, value]) => {
+                if (/^\d+(\.\d+)?$/.test(value)) {
+                  value = Number(value);
+                }
+                if (/^\[.*\]$/.test(key)) {
+                  key = key.replace(/^\[|\]$/gim, "");
+                  try {
+                    if (typeof value === "string") {
+                      value = JSON.parse(value.replace(/'/gim, '"'));
+                    }
+                  } catch (error) {
+                    value = value;
+                  }
+                }
+                return [key, value];
+              })
+            );
+          })(descriptor?.scriptSetup?.attrs || {});
           return {
             ...res,
-            [id2.replace(process.cwd(), ".")]: descriptor?.scriptSetup?.attrs
+            [id2.replace(process.cwd(), ".")]: attrs
           };
         }, {});
         return `${ROUTES_CUSTOM_ROUTER}

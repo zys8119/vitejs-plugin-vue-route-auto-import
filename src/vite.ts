@@ -57,9 +57,29 @@ const ROUTES_META = function (config?: Partial<Config>): Plugin {
                 code.match(/<script([^>])*>/)?.[0] || "<script>"
               }console.log(1)<script/>`
             ).descriptor;
+            const attrs = ((attr) => {
+              return Object.fromEntries(
+                Object.entries(attr).map(([key, value]: any) => {
+                  if (/^\d+(\.\d+)?$/.test(value)) {
+                    value = Number(value);
+                  }
+                  if (/^\[.*\]$/.test(key)) {
+                    key = key.replace(/^\[|\]$/gim, "");
+                    try {
+                      if (typeof value === "string") {
+                        value = JSON.parse(value.replace(/'/gim, '"'));
+                      }
+                    } catch (error) {
+                      value = value;
+                    }
+                  }
+                  return [key, value];
+                })
+              );
+            })(descriptor?.scriptSetup?.attrs || {});
             return {
               ...res,
-              [id.replace(process.cwd(), ".")]: descriptor?.scriptSetup?.attrs,
+              [id.replace(process.cwd(), ".")]: attrs,
             };
           }, {});
 
