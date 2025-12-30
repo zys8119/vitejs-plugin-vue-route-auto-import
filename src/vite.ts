@@ -6,6 +6,7 @@ import glob from "fast-glob";
 import _ from "lodash";
 import { Config } from "../type";
 const ROUTES_META = function (config?: Partial<Config>): Plugin {
+  let map: any = {};
   const currConfig: Config = _.merge(
     {
       route: "route",
@@ -19,7 +20,7 @@ const ROUTES_META = function (config?: Partial<Config>): Plugin {
   );
   const fileReg = new RegExp(`\\.(${currConfig.suffix.join("|")})$`);
   const routeReg = new RegExp(
-    `${currConfig.route}\.${currConfig.route_suffix}$`
+    `${resolve(process.cwd(), currConfig.route)}\.${currConfig.route_suffix}$`
   );
   const routePath = resolve(
     process.cwd(),
@@ -41,70 +42,99 @@ const ROUTES_META = function (config?: Partial<Config>): Plugin {
   const ROUTES_CUSTOM_CONFIG = currConfig.routesCustomConfig
     ? `import ROUTES_CUSTOM_CONFIG from "${currConfig.routesCustomConfig}"`
     : "const ROUTES_CUSTOM_CONFIG = {}";
-  let routeModuleId = null;
+  const load = (id: string) => {
+    try {
+      map = glob.sync("**/*.vue", { absolute: true }).reduce((res, id) => {
+        const code = readFileSync(id, "utf-8");
+        const descriptor = sfc.parse(
+          `${
+            code.match(/<script([^>])*>/)?.[0] || "<script>"
+          }console.log(1)<script/>`
+        ).descriptor;
+        const attrs = ((attr) => {
+          return Object.fromEntries(
+            Object.entries(attr).map(([key, value]: any) => {
+              if (/^\d+(\.\d+)?$/.test(value)) {
+                value = Number(value);
+              }
+              if (/^\[.*\]$/.test(key)) {
+                key = key.replace(/^\[|\]$/gim, "");
+                try {
+                  if (typeof value === "string") {
+                    value = JSON.parse(value.replace(/'/gim, '"'));
+                  }
+                } catch (error) {
+                  value = value;
+                }
+              }
+              return [key, value];
+            })
+          );
+        })(descriptor?.scriptSetup?.attrs || {});
+        return {
+          ...res,
+          [id.replace(process.cwd(), ".")]: attrs,
+        };
+      }, {});
+      const code =
+        `${ROUTES_CUSTOM_ROUTER}\n${ROUTES_CUSTOM_CONFIG}\n` +
+        readFileSync(id, "utf-8")
+          .replace(/ROUTES_META/gim, JSON.stringify(map))
+          .replace(
+            /ROUTES_FILTER_REG/gim,
+            new RegExp(currConfig.routesFilter).toString()
+          )
+          .replace(/VIEWREG/gim, currConfig.views.replace(/\//gim, "\\/"))
+          .replace(/VIEWSDIR/gim, currConfig.views)
+          .replace(/page\.json/gim, currConfig.pageJson)
+          .replace(/\{vue\,jsx\,tsx\}/gim, `{${currConfig.suffix.join(",")}}`)
+          .replace(/\(vue\|jsx\|tsx\)/gim, `(${currConfig.suffix.join("|")})`);
+      return {
+        id,
+        code,
+        map,
+      };
+    } catch (error) {
+      return {
+        id,
+        code: "",
+        map: {},
+      };
+    }
+  };
+
+  let routeModuleId: any = null;
   return {
     name: "ROUTES_META",
     enforce: "pre",
     load(id) {
       if (routeReg.test(id)) {
         routeModuleId = id;
-        const map = glob
-          .sync("**/*.vue", { absolute: true })
-          .reduce((res, id) => {
-            const code = readFileSync(id, "utf-8");
-            const descriptor = sfc.parse(
-              `${
-                code.match(/<script([^>])*>/)?.[0] || "<script>"
-              }console.log(1)<script/>`
-            ).descriptor;
-            const attrs = ((attr) => {
-              return Object.fromEntries(
-                Object.entries(attr).map(([key, value]: any) => {
-                  if (/^\d+(\.\d+)?$/.test(value)) {
-                    value = Number(value);
-                  }
-                  if (/^\[.*\]$/.test(key)) {
-                    key = key.replace(/^\[|\]$/gim, "");
-                    try {
-                      if (typeof value === "string") {
-                        value = JSON.parse(value.replace(/'/gim, '"'));
-                      }
-                    } catch (error) {
-                      value = value;
-                    }
-                  }
-                  return [key, value];
-                })
-              );
-            })(descriptor?.scriptSetup?.attrs || {});
-            return {
-              ...res,
-              [id.replace(process.cwd(), ".")]: attrs,
-            };
-          }, {});
-
-        return (
-          `${ROUTES_CUSTOM_ROUTER}\n${ROUTES_CUSTOM_CONFIG}\n` +
-          readFileSync(id, "utf-8")
-            .replace(/ROUTES_META/gim, JSON.stringify(map))
-            .replace(
-              /ROUTES_FILTER_REG/gim,
-              new RegExp(currConfig.routesFilter).toString()
-            )
-            .replace(/VIEWREG/gim, currConfig.views.replace(/\//gim, "\\/"))
-            .replace(/VIEWSDIR/gim, currConfig.views)
-            .replace(/page\.json/gim, currConfig.pageJson)
-            .replace(/\{vue\,jsx\,tsx\}/gim, `{${currConfig.suffix.join(",")}}`)
-            .replace(/\(vue\|jsx\|tsx\)/gim, `(${currConfig.suffix.join("|")})`)
-        );
+        return load(id).code;
       }
     },
     handleHotUpdate(cxt) {
-      if (currConfig?.handleHotUpdate?.(cxt) && fileReg.test(cxt.file)) {
-        cxt.server.reloadModule(
-          cxt.server.moduleGraph.getModuleById(routeModuleId)
-        );
-      }
+      try {
+        if (
+          routeModuleId &&
+          fileReg.test(cxt.file) &&
+          /\.vue$/.test(cxt.file)
+        ) {
+          const file = cxt.file.replace(process.cwd(), ".");
+          const fileMap = map[file];
+          if (fileMap) {
+            if (
+              JSON.stringify(fileMap) !== JSON.stringify(load(file).map[file])
+            ) {
+              cxt.server.reloadModule(
+                cxt.server.moduleGraph.getModuleById(
+                  routeModuleId as unknown as string
+                ) as any
+              );
+            }
+          }
+        }
+      } catch (error) {}
     },
   };
 };
