@@ -5,6 +5,17 @@ import * as sfc from "@vue/compiler-sfc";
 import glob from "fast-glob";
 import _ from "lodash";
 import { Config } from "../type";
+const diff = (a: any, b: any) => {
+  if (Object.keys(a).length !== Object.keys(b).length) {
+    return true;
+  }
+  for (const key in a) {
+    if (a[key] !== b[key]) {
+      return true;
+    }
+  }
+  return false;
+};
 const ROUTES_META = function (config?: Partial<Config>): Plugin {
   let map: any = {};
   const currConfig: Config = _.merge(
@@ -113,28 +124,22 @@ const ROUTES_META = function (config?: Partial<Config>): Plugin {
         return load(id).code;
       }
     },
-    handleHotUpdate(cxt) {
-      try {
-        if (
-          routeModuleId &&
-          fileReg.test(cxt.file) &&
-          /\.vue$/.test(cxt.file)
-        ) {
-          const file = cxt.file.replace(process.cwd(), ".");
+    configureServer(server) {
+      server.watcher.on("all", async (type, fileId) => {
+        const file = fileId.replace(process.cwd(), ".");
+        try {
           const fileMap = map[file];
-          if (fileMap) {
-            if (
-              JSON.stringify(fileMap) !== JSON.stringify(load(file).map[file])
-            ) {
-              cxt.server.reloadModule(
-                cxt.server.moduleGraph.getModuleById(
+          if (routeModuleId && /\.vue$/.test(fileId) && fileMap) {
+            if (diff(fileMap, load(file).map[file])) {
+              server.reloadModule(
+                server.moduleGraph.getModuleById(
                   routeModuleId as unknown as string
                 ) as any
               );
             }
           }
-        }
-      } catch (error) {}
+        } catch (error) {}
+      });
     },
   };
 };

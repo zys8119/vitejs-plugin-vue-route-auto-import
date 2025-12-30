@@ -3,6 +3,17 @@ const { resolve }  = require( "path");
 const sfc  = require( "@vue/compiler-sfc");
 const glob  = require( "fast-glob");
 const _  = require( "lodash");
+const diff = (a, b) => {
+  if (Object.keys(a).length !== Object.keys(b).length) {
+    return true;
+  }
+  for (const key in a) {
+    if (a[key] !== b[key]) {
+      return true;
+    }
+  }
+  return false;
+};
 const ROUTES_META = function(config) {
   let map = {};
   const currConfig = _.merge(
@@ -94,23 +105,23 @@ ${ROUTES_CUSTOM_CONFIG}
         return load(id).code;
       }
     },
-    handleHotUpdate(cxt) {
-      try {
-        if (routeModuleId && fileReg.test(cxt.file) && /\.vue$/.test(cxt.file)) {
-          const file = cxt.file.replace(process.cwd(), ".");
+    configureServer(server) {
+      server.watcher.on("all", async (type, fileId) => {
+        const file = fileId.replace(process.cwd(), ".");
+        try {
           const fileMap = map[file];
-          if (fileMap) {
-            if (JSON.stringify(fileMap) !== JSON.stringify(load(file).map[file])) {
-              cxt.server.reloadModule(
-                cxt.server.moduleGraph.getModuleById(
+          if (routeModuleId && /\.vue$/.test(fileId) && fileMap) {
+            if (diff(fileMap, load(file).map[file])) {
+              server.reloadModule(
+                server.moduleGraph.getModuleById(
                   routeModuleId
                 )
               );
             }
           }
+        } catch (error) {
         }
-      } catch (error) {
-      }
+      });
     }
   };
 };
