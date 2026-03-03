@@ -31,7 +31,7 @@ const ROUTES_META = function (config?: Partial<Config>): Plugin {
   );
   const fileReg = new RegExp(`\\.(${currConfig.suffix.join("|")})$`);
   const routeReg = new RegExp(
-    `${resolve(process.cwd(), currConfig.route)}\.${currConfig.route_suffix}$`
+    `${resolve(process.cwd(), currConfig.route)}\.${currConfig.route_suffix}$`.replace(/\\/g,'/')
   );
   const routePath = resolve(
     process.cwd(),
