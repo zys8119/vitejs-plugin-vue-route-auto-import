@@ -87,6 +87,7 @@ const ROUTES_META = function (config?: Partial<Config>): Plugin {
           [id.replace(process.cwd(), ".")]: attrs,
         };
       }, {});
+      map = Object.fromEntries(Object.entries(map).map(([k,v])=>[k.replace(process.cwd(),'.'),v]))
       const code =
         `${ROUTES_CUSTOM_ROUTER}\n${ROUTES_CUSTOM_CONFIG}\n` +
         readFileSync(id, "utf-8")
